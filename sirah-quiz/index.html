@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kuiz Sirah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#10243A;--panel:#1A3552;--gold:#F2C14E;--mint:#6FD1B0;--rose:#E4657A;--sky:#8FB8FF;--ink:#EAF1F7;--dim:#9DB2C7}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:500 18px/1.4 'Baloo 2',system-ui,sans-serif}
+main{max-width:560px;margin:0 auto;padding:28px 20px 48px}
+h1{font-size:2.2rem;line-height:1.1;margin:0 0 6px;color:var(--gold);font-weight:800}
+p{margin:6px 0;color:var(--dim)}
+.err{color:var(--rose);min-height:1.4em}
+label{display:block;margin:18px 0 8px;color:var(--dim)}
+input{width:100%;padding:12px 14px;font:inherit;color:var(--ink);background:var(--panel);border:2px solid transparent;border-radius:12px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button{font:inherit;font-weight:700;cursor:pointer;border:0;border-radius:12px;padding:12px 18px;background:var(--gold);color:#10243A}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--dim);margin-top:12px;width:100%}
+.row{display:flex;gap:10px;margin-top:18px}.row input{flex:1}
+.chips{display:flex;gap:8px;margin:8px 0}
+.chip{width:46px;height:46px;padding:0;font-size:1.4rem;background:var(--panel);color:var(--ink);border:2px solid transparent}
+.chip.on{border-color:var(--gold)}
+.av{position:relative;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:2.4rem;margin:14px 0 4px}
+.av i{position:absolute;top:-16px;font-style:normal;font-size:1.8rem}
+.grid{display:flex;flex-wrap:wrap;gap:6px 18px;margin:18px 0}
+.grid div{text-align:center;font-size:.9rem}.grid .av{margin:14px auto 2px;width:60px;height:60px;font-size:1.9rem}
+.pin{font-size:4rem;letter-spacing:.15em;color:var(--gold);font-weight:800;margin:4px 0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.opts button{min-height:92px;font-size:1.1rem}
+.o0{background:var(--gold)}.o1{background:var(--mint)}.o2{background:var(--rose)}.o3{background:var(--sky)}
+.bar{height:8px;background:var(--panel);border-radius:4px;overflow:hidden;margin:12px 0}.bar b{display:block;height:100%;background:var(--gold);transition:width .25s linear}
+.q{font-size:1.5rem;line-height:1.25;margin:10px 0;color:var(--ink)}
+.res{font-size:1.6rem;font-weight:800;margin:8px 0}.ok{color:var(--mint)}.no{color:var(--rose)}
+ol{padding-left:1.4em;color:var(--ink)}ol li{margin:4px 0}ol span{color:var(--gold);float:right}
+</style>
+</head>
+<body>
+<main id="view"></main>
+<script type="module">
+import {joinRoom} from 'https://cdn.jsdelivr.net/npm/trystero/+esm';
+
+const APP='sirah-quiz-v1';
+const $=s=>document.querySelector(s);
+const view=$('#view');
+const R=h=>{view.innerHTML=h};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AV={b:['#F2C14E','#6FD1B0','#E4657A','#8FB8FF','#C79BFF'],f:['😀','😎','🤓','😇','🤠'],h:['','🧢','👑','🎩','🎓']};
+const SYM=['▲','◆','●','■'];
+const avatar=a=>`<div class=av style="background:${AV.b[a.b|0]||AV.b[0]}"><i>${AV.h[a.h|0]||''}</i>${AV.f[a.f|0]||AV.f[0]}</div>`;
+
+let me={name:'',b:0,f:0,h:0};
+try{me={...me,...JSON.parse(localStorage.getItem('sirah-player')||'{}')}}catch{}
+const save=()=>{try{localStorage.setItem('sirah-player',JSON.stringify(me))}catch{}};
+
+function home(err=''){
+  R(`<h1>Kuiz Sirah</h1><p>Main bersama kawan, secara live.</p>
+  <label>Nama<input id=name maxlength=14 value="${esc(me.name)}"></label>
+  ${['b','f','h'].map(k=>`<div class=chips>${AV[k].map((v,i)=>`<button class="chip ${me[k]==i?'on':''}" data-k=${k} data-i=${i} ${k=='b'?`style="background:${v}" aria-label="Warna ${i+1}"`:''}>${k=='b'?'':(v||'∅')}</button>`).join('')}</div>`).join('')}
+  ${avatar(me)}
+  <div class=row><input id=pin inputmode=numeric maxlength=4 placeholder="PIN 4 digit"><button data-act=join>Sertai</button></div>
+  <button class=ghost data-act=host>Jadi host</button><p class=err>${esc(err)}</p>`);
+}
+
+const act={};
+view.onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const n=$('#name');if(n){me.name=n.value.trim();save();}
+  if(b.dataset.k){me[b.dataset.k]=+b.dataset.i;save();return home();}
+  if(b.dataset.c!==undefined)return act.ans&&act.ans(+b.dataset.c);
+  if(b.dataset.act&&act[b.dataset.act])act[b.dataset.act]();
+};
+
+/* ---------- HOST ---------- */
+act.host=async()=>{
+  let Q;
+  try{Q=await (await fetch('questions.json')).json()}
+  catch{return home('Gagal baca questions.json. Guna local server atau deploy ke GitHub Pages.')}
+  const pin=String(1000+Math.floor(Math.random()*9000));
+  const room=joinRoom({appId:APP},pin);
+  const [send,get]=room.makeAction('msg');
+  const P={};let qi=-1,t0=0,sec=15,tick=0,phase='lobby';
+  const ids=()=>Object.keys(P);
+  const board=()=>ids().map(i=>({id:i,...P[i]})).sort((a,b)=>b.score-a.score);
+  const top=()=>`<ol>${board().slice(0,5).map(p=>`<li>${esc(p.name)}<span>${p.score}</span></li>`).join('')}</ol>`;
+
+  room.onPeerJoin(id=>send({t:'host'},id));
+  room.onPeerLeave(id=>{delete P[id];if(phase=='lobby')lobby();});
+  get((m,id)=>{
+    if(m.t=='hello'){
+      if(phase!='lobby')return send({t:'late'},id);
+      P[id]={name:String(m.n||'?').slice(0,14),a:m.a||{},score:0,ans:null};
+      send({t:'lobby'},id);lobby();
+    }
+    if(m.t=='ans'&&phase=='q'&&P[id]&&!P[id].ans){
+      P[id].ans={c:+m.c,ms:Date.now()-t0};
+      const n=ids().filter(i=>P[i].ans).length;
+      $('#cnt').textContent=n+'/'+ids().length;
+      if(n==ids().length)reveal();
+    }
+  });
+
+  function lobby(){
+    R(`<p>Masukkan PIN ini di laman yang sama:</p><div class=pin>${pin}</div>
+    <div class=grid>${ids().map(i=>`<div>${avatar(P[i].a)}${esc(P[i].name)}</div>`).join('')||'<p>Menunggu pemain…</p>'}</div>
+    <button data-act=start>Mula (${ids().length} pemain)</button>`);
+  }
+  act.start=()=>{if(ids().length)next()};
+  act.next=()=>next();
+
+  function next(){
+    qi++;if(qi>=Q.length)return finish();
+    phase='q';ids().forEach(i=>P[i].ans=null);
+    const q=Q[qi];sec=q.sec||15;t0=Date.now();
+    send({t:'q',i:qi,n:Q.length,q:q.q,o:q.o,sec});
+    R(`<p>Soalan ${qi+1}/${Q.length} · dijawab <b id=cnt>0/${ids().length}</b></p>
+    <div class=q>${esc(q.q)}</div><div class=bar><b id=bar style="width:100%"></b></div>
+    <div class=opts>${q.o.map((o,i)=>`<button class=o${i} disabled>${SYM[i]} ${esc(o)}</button>`).join('')}</div>`);
+    clearInterval(tick);
+    tick=setInterval(()=>{
+      const left=sec-(Date.now()-t0)/1000;
+      const bar=$('#bar');if(bar)bar.style.width=Math.max(0,left/sec*100)+'%';
+      if(left<=0)reveal();
+    },250);
+  }
+
+  function reveal(){
+    if(phase!='q')return;
+    phase='r';clearInterval(tick);
+    const q=Q[qi];
+    ids().forEach(i=>{
+      const a=P[i].ans,ok=!!a&&a.c==q.a;
+      P[i].ok=ok;P[i].pts=ok?Math.max(500,Math.round(1000*(1-a.ms/(sec*1000)/2))):0;
+      P[i].score+=P[i].pts;
+    });
+    const b=board();
+    b.forEach((p,r)=>send({t:'rev',a:q.a,ok:p.ok,pts:p.pts,score:p.score,rank:r+1,of:b.length},p.id));
+    R(`<p>Jawapan betul</p><div class=q>${SYM[q.a]} ${esc(q.o[q.a])}</div>${top()}
+    <button data-act=next>${qi+1<Q.length?'Soalan seterusnya':'Keputusan akhir'}</button>`);
+  }
+
+  function finish(){
+    phase='end';
+    const b=board();
+    b.forEach((p,r)=>send({t:'end',score:p.score,rank:r+1,of:b.length},p.id));
+    R(`<h1>Tamat</h1>${top()}`);
+  }
+  lobby();
+};
+
+/* ---------- PEMAIN ---------- */
+act.join=()=>{
+  if(!me.name)return home('Isi nama dahulu.');
+  const pin=($('#pin').value||'').trim();
+  if(!/^\d{4}$/.test(pin))return home('PIN mesti 4 digit.');
+  const room=joinRoom({appId:APP},pin);
+  const [send,get]=room.makeAction('msg');
+  let host=null,qd=0;
+  R('<h1>Menyambung…</h1><p>Mencari host.</p>');
+  setTimeout(()=>{if(!host){room.leave();home('Host tidak dijumpai, atau sambungan gagal.')}},15000);
+
+  get((m,id)=>{
+    if(m.t=='host'&&!host){host=id;send({t:'hello',n:me.name,a:{b:me.b,f:me.f,h:me.h}},id);return}
+    if(id!==host)return;
+    if(m.t=='lobby')R(`<h1>Anda dah masuk</h1>${avatar(me)}<p>${esc(me.name)}. Tunggu host mulakan.</p>`);
+    if(m.t=='late')R('<h1>Game dah mula</h1><p>Tunggu sesi seterusnya.</p>');
+    if(m.t=='q'){
+      qd=Date.now();
+      R(`<p>Soalan ${m.i+1}/${m.n}</p><div class=q>${esc(m.q)}</div>
+      <div class=opts>${m.o.map((o,i)=>`<button class=o${i} data-c=${i}>${SYM[i]} ${esc(o)}</button>`).join('')}</div>`);
+      act.ans=c=>{act.ans=null;send({t:'ans',c},host);R('<h1>Jawapan dihantar</h1><p>Tunggu yang lain.</p>')};
+    }
+    if(m.t=='rev'){
+      act.ans=null;
+      R(`<div class="res ${m.ok?'ok':'no'}">${m.ok?'Betul':'Salah'}${m.ok?' +'+m.pts:''}</div>
+      <p>Skor ${m.score} · tempat ${m.rank} daripada ${m.of}</p>`);
+    }
+    if(m.t=='end')R(`<h1>Tamat</h1><p>Anda tempat ${m.rank} daripada ${m.of} dengan ${m.score} mata.</p>`);
+  });
+};
+
+home();
+</script>
+</body>
+</html>

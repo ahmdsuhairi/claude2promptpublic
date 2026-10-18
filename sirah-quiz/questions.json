@@ -1,0 +1,7 @@
+[
+  { "q": "Di bandar manakah Nabi Muhammad SAW dilahirkan?", "o": ["Mekah", "Madinah", "Taif", "Jeddah"], "a": 0, "sec": 15 },
+  { "q": "Siapakah nama bapa Nabi Muhammad SAW?", "o": ["Abu Talib", "Abdullah", "Abu Lahab", "Hamzah"], "a": 1, "sec": 15 },
+  { "q": "Di manakah wahyu pertama diturunkan kepada Nabi SAW?", "o": ["Gua Thur", "Masjidil Haram", "Gua Hira", "Bukit Uhud"], "a": 2, "sec": 15 },
+  { "q": "Hijrah Nabi SAW dari Mekah ke Madinah berlaku pada tahun berapa Masihi?", "o": ["571", "610", "622", "632"], "a": 2, "sec": 20 },
+  { "q": "Perang Badar berlaku pada tahun ke berapa Hijrah?", "o": ["Tahun 1", "Tahun 2", "Tahun 3", "Tahun 5"], "a": 1, "sec": 20 }
+]
