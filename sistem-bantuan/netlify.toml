@@ -1,0 +1,18 @@
+[build]
+  publish = "web"
+  # Masukkan URL Apps Script dari pemboleh ubah persekitaran API_URL (Site settings > Environment variables),
+  # supaya URL tidak perlu disimpan dalam repo. Tiada kesan jika config.js sudah diedit terus.
+  command = "sed -i \"s|GANTI_DENGAN_URL_WEB_APP|${API_URL}|\" web/config.js"
+
+# Pengepala keselamatan. connect-src hanya membenarkan panggilan ke Apps Script.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Strict-Transport-Security = "max-age=31536000"
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-cache"
